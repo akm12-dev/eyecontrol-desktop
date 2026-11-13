@@ -98,6 +98,17 @@ EDITS: dict[str, list[Edit]] = {
       default:
         return ThemeMode.dark;""", None),
     ],
+    "flutter/lib/desktop/pages/desktop_home_page.dart": [
+        ("""                  Color.fromARGB(255, 226, 66, 188),
+                  Color.fromARGB(255, 244, 114, 124),""", """                  Color(0xFF0369A1),
+                  Color(0xFF0EA5E9),""", None),
+    ],
+    "flutter/lib/desktop/pages/connection_page.dart": [
+        # the AKM12 server is built in: never suggest setting up a server
+        ("""            offstage: !(!_svcStopped.value &&
+                stateGlobal.svcStatus.value == SvcStatus.ready &&
+                _svcIsUsingPublicServer.value),""", """            offstage: true,""", None),
+    ],
     "flutter/lib/desktop/widgets/tabbar_widget.dart": [
         ("dividerColor: Color.fromARGB(255, 64, 64, 64),", "dividerColor: Color(0xFF1E2C3A),", None),
         ("unSelectedTabIconColor: Color.fromARGB(255, 30, 65, 98),", "unSelectedTabIconColor: Color(0xFF1E4A66),", None),
@@ -126,6 +137,10 @@ def apply(path: Path, edits: list[Edit]) -> int:
     return changed
 
 
+# Texts that must keep naming RustDesk: the honest "Powered by RustDesk" credit (AGPL base).
+KEEP_RUSTDESK_KEYS = ("powered_by_me",)
+
+
 def rename_in_translations() -> int:
     """'RustDesk' -> 'EyeControl' in displayed texts only; keys (lookups) are never changed."""
     total = 0
@@ -136,7 +151,14 @@ def rename_in_translations() -> int:
         lines = raw.decode("utf-8").split("\n")
         for i, line in enumerate(lines):
             m = LANG_LINE.match(line)
-            if m and "RustDesk" in m.group(2) and "rustdesk.com" not in m.group(2):
+            if not m:
+                continue
+            if any(f'("{key}",' in m.group(1) for key in KEEP_RUSTDESK_KEYS):
+                if APP_NAME in m.group(2):
+                    lines[i] = m.group(1) + m.group(2).replace(APP_NAME, "RustDesk") + m.group(3)
+                    total += 1
+                continue
+            if "RustDesk" in m.group(2) and "rustdesk.com" not in m.group(2):
                 lines[i] = m.group(1) + m.group(2).replace("RustDesk", APP_NAME) + m.group(3)
                 total += 1
         file.write_bytes("\n".join(lines).encode("utf-8"))
