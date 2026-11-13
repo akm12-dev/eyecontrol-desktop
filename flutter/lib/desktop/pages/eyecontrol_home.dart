@@ -1,6 +1,7 @@
 // EyeControl home screen (AKM12): neon dashboard replacing the stock home layout.
 // It only drives existing features: connect(), peer list, server status, own ID/password.
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ class EyeControlHome extends StatefulWidget {
 
 class _EyeControlHomeState extends State<EyeControlHome> {
   Timer? _timer;
+  Timer? _statusTimer;
   String _version = '';
   int _queriedCount = -1;
 
@@ -40,6 +42,11 @@ class _EyeControlHomeState extends State<EyeControlHome> {
     _peers.addListener(_onPeers);
     bind.mainLoadRecentPeers();
     _timer = Timer.periodic(const Duration(seconds: 30), (_) => _refresh());
+    // The stock status bar (OnlineStatusWidget) is not on this screen: poll the
+    // rendezvous status ourselves, like it does, so "Connecté" stays accurate.
+    _updateStatus();
+    _statusTimer =
+        Timer.periodic(const Duration(seconds: 1), (_) => _updateStatus());
     bind.mainGetVersion().then((v) {
       if (mounted) setState(() => _version = v);
     });
@@ -48,6 +55,7 @@ class _EyeControlHomeState extends State<EyeControlHome> {
   @override
   void dispose() {
     _timer?.cancel();
+    _statusTimer?.cancel();
     _peers.removeListener(_onPeers);
     super.dispose();
   }
@@ -58,6 +66,23 @@ class _EyeControlHomeState extends State<EyeControlHome> {
       _queryOnlines();
     }
     if (mounted) setState(() {});
+  }
+
+  Future<void> _updateStatus() async {
+    try {
+      final status =
+          jsonDecode(await bind.mainGetConnectStatus()) as Map<String, dynamic>;
+      final statusNum = status['status_num'] as int;
+      if (statusNum == 0) {
+        stateGlobal.svcStatus.value = SvcStatus.connecting;
+      } else if (statusNum == 1) {
+        stateGlobal.svcStatus.value = SvcStatus.ready;
+      } else {
+        stateGlobal.svcStatus.value = SvcStatus.notReady;
+      }
+      final count = status['video_conn_count'];
+      if (count is int) stateGlobal.videoConnCount.value = count;
+    } catch (_) {}
   }
 
   void _refresh() {
