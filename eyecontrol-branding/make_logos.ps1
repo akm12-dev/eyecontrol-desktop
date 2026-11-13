@@ -51,6 +51,14 @@ $g.Dispose()
 $transparent = [EcAlpha]::BlackToAlpha($scaled)
 $transparent.Save("$root\flutter\assets\logo_dark.png", [System.Drawing.Imaging.ImageFormat]::Png)
 
+# Large transparent logo for the centre of the EyeControl home screen
+$hh = 300; $hw = [int]($crop.Width * $hh / $crop.Height)
+$big, $g = New-Canvas $hw $hh
+$g.Clear([System.Drawing.Color]::Black)
+$g.DrawImage($img, (New-Object System.Drawing.Rectangle 0, 0, $hw, $hh), $crop, [System.Drawing.GraphicsUnit]::Pixel)
+$g.Dispose()
+([EcAlpha]::BlackToAlpha($big)).Save("$root\flutter\assets\logo_hero.png", [System.Drawing.Imaging.ImageFormat]::Png)
+
 # Light theme: same transparent logo on a rounded navy card
 $pad = 10
 $card, $g = New-Canvas ($w + 2 * $pad) ($h + 2 * $pad)
