@@ -27,10 +27,10 @@ windows = { version = "0.61", features = [
 native-windows-gui = {version = "1.0", default-features = false, features = ["animation-timer", "image-decoder"]}
 
 [package.metadata.winres]
-LegalCopyright = "Copyright © 2026 Purslane Tech Pte. Ltd. All rights reserved."
-ProductName = "RustDesk"
-OriginalFilename = "rustdesk.exe"
-FileDescription = "RustDesk Remote Desktop"
+LegalCopyright = "EyeControl (c) 2026 AKM12, based on RustDesk (c) Purslane Tech Pte. Ltd., AGPL-3.0"
+ProductName = "EyeControl"
+OriginalFilename = "EyeControl.exe"
+FileDescription = "EyeControl Remote Support"
 #ProductVersion = ""
 
 [target.'cfg(target_os="windows")'.build-dependencies]

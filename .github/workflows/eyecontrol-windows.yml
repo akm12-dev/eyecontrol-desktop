@@ -134,13 +134,23 @@ jobs:
         shell: bash
         run: |
           sed -i '/dpiAware/d' res/manifest.xml
+          # Own program name: unpacks to %LOCALAPPDATA%\eyecontrol-desktop, never into a stock RustDesk folder
+          # nor into %LOCALAPPDATA%\EyeControl (the EyeControl console's logs).
+          mv ./rustdesk/rustdesk.exe ./rustdesk/eyecontrol-desktop.exe
           pushd ./libs/portable
           pip3 install -r requirements.txt
-          python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
+          python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/eyecontrol-desktop.exe
           popd
           mkdir -p ./out
           mv ./target/release/rustdesk-portable-packer.exe ./out/EyeControl-${{ env.VERSION }}-x86_64.exe
           sha256sum ./out/*.exe
+
+      - name: Check package branding
+        shell: powershell
+        run: |
+          $info = (Get-Item ".\out\EyeControl-$env:VERSION-x86_64.exe").VersionInfo
+          Write-Host "Package ProductName: $($info.ProductName) / FileDescription: $($info.FileDescription)"
+          if ($info.ProductName -ne "EyeControl") { throw "Branding missing in the package resources" }
 
       - name: Upload EyeControl executable
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
